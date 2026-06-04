@@ -10,6 +10,7 @@ from src.prompt import *
 import os
 
 app = Flask(__name__)
+chat_history = []
 
 load_dotenv()
 
@@ -49,9 +50,23 @@ def chat():
     msg = request.form["msg"]
     input = msg
     print(input)
-    response = rag_chain.invoke({"input": msg})
-    print("Response : ", response["answer"])
-    return str(response["answer"])
+    history_text = "\n".join(chat_history)
+    response = rag_chain.invoke(
+        {
+            "input": msg,
+            "chat_history": history_text
+        }
+    )
+    answer = response["answer"]
+    chat_history.append(f"User: {msg}")
+    chat_history.append(f"Assistant: {answer}")
+
+    # Keep only last 10 exchanges
+    if len(chat_history) > 20:
+      chat_history[:] = chat_history[-20:]
+    
+    print("Response :", answer)
+    return str(answer)
 
 
 if __name__ == '__main__':
